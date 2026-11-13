@@ -6,7 +6,7 @@
 
 import { DEFAULT_CAPTURE, parseCapture } from './capture-parse.js';
 import { demoData } from './demo.js';
-import { buildView, clock, dayLabel } from './model.js';
+import { buildView, clock, dayLabel, money } from './model.js';
 import { newTaskId } from './ops.js';
 import { Store } from './store.js';
 
@@ -125,6 +125,21 @@ function fold(key, label, body) {
   return `<section class="block"><button class="fold" data-act="toggle-fold" data-key="${key}" aria-expanded="${open}">${ICON.chevron}${esc(label)}</button>${open ? body : ''}</section>`;
 }
 
+function renderFundraising(f) {
+  const facts = [f.percent != null ? `${f.percent}% of ${money(f.goal)}` : plural(f.count, 'donation'), f.daysLeft != null ? `${plural(f.daysLeft, 'day')} to go` : ''].filter(Boolean).join(' · ');
+  const week = f.week.count ? `Past 7 days: ${plural(f.week.count, 'donation')}, ${money(f.week.raised)}` : 'No donations in the past 7 days';
+  const hidden = f.hidden ? `<p class="fund-note">${plural(f.hidden, 'donor')} hid their amount, so the true total is a little higher.</p>` : '';
+  const recent = f.recent.length
+    ? fold('donations', `Recent donations (${f.recent.length})`, card(f.recent.map((row) => `<li class="fund-row"><span class="amt">${row.amount != null ? esc(money(row.amount)) : 'Hidden'}</span><span class="who">to <b>${esc(row.to || 'the event')}</b><span class="sub">from ${esc(row.from)} · ${esc(row.age)}</span></span></li>`)))
+    : '';
+  return `${block(f.name, `<div class="card fund">
+      <p class="fund-total">${esc(money(f.raised))}</p>
+      ${f.goal ? `<progress max="${Number(f.goal)}" value="${Math.min(Number(f.raised), Number(f.goal))}" aria-label="Progress toward goal"></progress>` : ''}
+      <p class="fund-facts">${esc(facts)}</p>
+      <p class="fund-week">${esc(week)}</p>${hidden}
+    </div>`)}${recent}`;
+}
+
 function renderToday(view) {
   if (view.empty) {
     return `<section class="block"><div class="card welcome"><b>Waiting for the first update</b>
@@ -137,6 +152,7 @@ function renderToday(view) {
   if (view.overdue.length) parts.push(block('Overdue', card(view.overdue.map(taskRow)), { count: view.overdue.length, tone: 'overdue' }));
   parts.push(block('Due today', view.today.length ? card(view.today.map(taskRow)) : '<div class="card"><p class="empty-line">Nothing due today.</p></div>', { count: view.today.length || null }));
   if (view.undated.length) parts.push(block('No date', card(view.undated.map(taskRow)), { count: view.undated.length }));
+  if (view.fundraising) parts.push(renderFundraising(view.fundraising));
   return parts.join('');
 }
 

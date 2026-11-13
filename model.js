@@ -166,7 +166,37 @@ function mailView(site, user, nowMs) {
   };
 }
 
-const SOURCE_NAMES = { canvas: 'Canvas', gmail: 'Gmail', school: 'School email', teams: 'Teams' };
+const SOURCE_NAMES = { canvas: 'Canvas', gmail: 'Gmail', school: 'School email', teams: 'Teams', donordrive: 'DonorDrive' };
+const SOURCE_UNITS = { canvas: 'items', gmail: 'recent messages', donordrive: 'donations' };
+
+export function money(amount) {
+  return `$${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function fundraisingView(site, nowMs) {
+  const data = site.fundraising;
+  if (!data || typeof data !== 'object') return null;
+  const raised = Number(data.raised) || 0;
+  const goal = Number(data.goal) > 0 ? Number(data.goal) : null;
+  const start = ms(data.eventStart);
+  return {
+    name: data.name || 'Fundraising',
+    raised,
+    goal,
+    percent: goal ? Math.round((100 * raised) / goal) : null,
+    hidden: Number(data.hiddenAmounts) || 0,
+    count: Number(data.count) || 0,
+    daysLeft: start != null && start > nowMs ? dayDiff(nowMs, start) : null,
+    week: { count: Number(data.week?.count) || 0, raised: Number(data.week?.raised) || 0 },
+    recent: (data.recent || []).slice(0, 12).map((row) => ({
+      id: String(row.id),
+      amount: typeof row.amount === 'number' ? row.amount : null,
+      to: row.to || '',
+      from: row.from || 'Anonymous',
+      age: ago(ms(row.at), nowMs),
+    })),
+  };
+}
 
 export function health(site, nowMs) {
   const status = site.status || {};
@@ -176,7 +206,9 @@ export function health(site, nowMs) {
     if (to === 'bad' || (to === 'warn' && level === 'ok')) level = to;
   };
 
-  for (const name of ['canvas', 'gmail']) {
+  // Canvas and Gmail are always listed; other fetched sources only once they are switched on.
+  const fetched = ['canvas', 'gmail', ...['donordrive'].filter((name) => status.sources?.[name])];
+  for (const name of fetched) {
     const source = status.sources?.[name] || { state: 'off' };
     const last = ms(source.lastSuccess);
     if (source.state === 'off') {
@@ -188,7 +220,7 @@ export function health(site, nowMs) {
       raise('warn');
       sources.push({ name: SOURCE_NAMES[name], level: 'warn', detail: `No update since ${ago(last, nowMs)} — the scheduled run may have stopped.` });
     } else {
-      sources.push({ name: SOURCE_NAMES[name], level: 'ok', detail: `Updated ${ago(last, nowMs)}${source.count != null ? ` · ${source.count} ${name === 'canvas' ? 'items' : 'recent messages'}` : ''}` });
+      sources.push({ name: SOURCE_NAMES[name], level: 'ok', detail: `Updated ${ago(last, nowMs)}${source.count != null ? ` · ${source.count} ${SOURCE_UNITS[name]}` : ''}` });
     }
   }
 
@@ -284,6 +316,7 @@ export function buildView(siteInput, userInput, nowMs, seenBeforeMs = null) {
     mail: mailView(site, user, nowMs),
     senders: Object.entries(user.senders).map(([key, rule]) => ({ key, rule })).sort((a, b) => a.key.localeCompare(b.key)),
     health: health(site, nowMs),
+    fundraising: fundraisingView(site, nowMs),
     empty: !site.generatedAt && user.tasks.length === 0,
   };
   view.headline = headline(view);

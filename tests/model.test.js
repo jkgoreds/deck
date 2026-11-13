@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ago, buildView, dayDiff, dayLabel, headline, health } from '../model.js';
+import { ago, buildView, dayDiff, dayLabel, headline, health, money } from '../model.js';
 import { emptyUser } from '../ops.js';
 
 // Built from local-time parts so the suite passes in any timezone.
@@ -166,6 +166,24 @@ test('nothing set up yet is reported as waiting, not as healthy', () => {
   assert.equal(view.empty, true);
   assert.equal(view.health.level, 'off');
   assert.equal(view.health.label, 'Waiting for first update');
+});
+
+test('fundraising: totals, progress and recent donations', () => {
+  const withFund = site({ fundraising: { name: 'Spring Drive', goal: 1000, raised: 650.5, count: 12, hiddenAmounts: 1, week: { count: 3, raised: 90 }, eventStart: new Date(2027, 1, 19, 0).toISOString(), recent: [{ id: 'D2', at: iso(12, 13, 30), amount: 50, to: 'Alex', from: 'Pat' }, { id: 'D1', at: iso(11, 9), amount: null, to: 'Sam' }] } });
+  const f = buildView(withFund, emptyUser(), NOW).fundraising;
+  assert.deepEqual([f.raised, f.goal, f.percent, f.hidden, f.daysLeft], [650.5, 1000, 65, 1, 99]);
+  assert.deepEqual(f.recent.map((r) => [r.amount, r.to, r.from, r.age]), [[50, 'Alex', 'Pat', '30 min ago'], [null, 'Sam', 'Anonymous', 'yesterday at 9:00 AM']]);
+  assert.equal(buildView(site(), emptyUser(), NOW).fundraising, null);
+  assert.equal(money(16279.7), '$16,279.70');
+});
+
+test('health lists DonorDrive only once it is switched on', () => {
+  assert.ok(!health(site(), NOW).sources.some((s) => s.name === 'DonorDrive'));
+  const on = site();
+  on.status.sources.donordrive = { state: 'ok', lastSuccess: iso(12, 6, 40), count: 267 };
+  assert.match(health(on, NOW).sources.find((s) => s.name === 'DonorDrive').detail, /267 donations/);
+  on.status.sources.donordrive = { state: 'failing', error: 'DonorDrive could not be read', lastSuccess: iso(11, 6, 40) };
+  assert.equal(health(on, NOW).level, 'bad');
 });
 
 test('date helpers', () => {

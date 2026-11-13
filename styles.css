@@ -318,6 +318,21 @@ body.adding .add-cancel { display: block; color: var(--accent); font-weight: 600
 .noise-row .line { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .noise-row .line b { color: var(--ink); font-weight: 600; }
 
+/* ---------- fundraising ---------- */
+
+.fund { padding: 16px; display: grid; gap: 6px; }
+.fund-total { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fund progress { width: 100%; height: 10px; margin: 6px 0 2px; appearance: none; -webkit-appearance: none; border: 0; border-radius: 5px; overflow: hidden; background: var(--rule); accent-color: var(--accent); }
+.fund progress::-webkit-progress-bar { background: var(--rule); border-radius: 5px; }
+.fund progress::-webkit-progress-value { background: var(--accent); border-radius: 5px; }
+.fund progress::-moz-progress-bar { background: var(--accent); border-radius: 5px; }
+.fund-facts { font-weight: 600; }
+.fund-week, .fund-note { color: var(--muted); font-size: 14px; }
+.fund-row { display: grid; grid-template-columns: 84px 1fr; gap: 10px; padding: 10px 16px; align-items: baseline; }
+.fund-row .amt { font-weight: 650; font-variant-numeric: tabular-nums; }
+.fund-row .who { overflow-wrap: anywhere; }
+.fund-row .sub { display: block; font-size: 13px; color: var(--muted); }
+
 /* ---------- tab bar ---------- */
 
 .tabbar {

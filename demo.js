@@ -51,9 +51,25 @@ export function demoData(nowMs = Date.now()) {
         { course: 'LAW 210', days: [today], start: '15:30', end: '16:45', room: '310 Main Building' },
       ],
     },
+    fundraising: {
+      name: 'Spring Charity Drive',
+      goal: 5000,
+      raised: 3180.5,
+      count: 61,
+      hiddenAmounts: 2,
+      week: { count: 4, raised: 210 },
+      eventStart: at(40, 9),
+      recent: [
+        { id: 'd4', at: ago(4), amount: 50, to: 'Riley Chen', from: 'Northside Hardware' },
+        { id: 'd3', at: ago(20), amount: null, to: 'Sam Ortiz', from: 'Anonymous' },
+        { id: 'd2', at: ago(49), amount: 100, to: 'Riley Chen', from: 'The Park Family' },
+        { id: 'd1', at: ago(120), amount: 60, to: 'Dana Whitfield', from: 'J. Alvarez' },
+      ],
+    },
     status: {
       lastRun: ago(1.5),
       sources: {
+        donordrive: { state: 'ok', lastSuccess: ago(1.5), count: 61 },
         canvas: { state: 'ok', lastSuccess: ago(1.5), count: 11 },
         gmail: { state: 'ok', lastSuccess: ago(1.5), count: 41 },
         school: { state: 'ok', lastMail: ago(3) },
