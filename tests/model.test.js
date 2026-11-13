@@ -88,6 +88,18 @@ test('a task imported from the old app steps aside when Canvas lists the same th
   assert.deepEqual(shown.sort(), ['m:b', 'm:c']);
 });
 
+test('…including when Canvas decorates the title, but a short title is never swallowed', () => {
+  const decorated = site();
+  decorated.items.push(item('exam', 'SAVE THE DATE! MATH 140 - Exam 3: Thursday at the Testing Center', iso(19, 23)));
+  const tasks = [
+    { id: 'm:a', title: 'MATH 140 - Exam 3: Thursday at the Testing Center', dueAt: iso(19, 23), done: false, imported: true },
+    { id: 'm:b', title: 'Quiz', dueAt: iso(12, 16), done: false, imported: true }, // Canvas has "Quiz 9"; not the same thing
+  ];
+  const view = buildView(decorated, { ...emptyUser(), tasks }, NOW);
+  const own = [...view.today, ...view.later, ...view.upcoming.flatMap((d) => d.rows)].filter((r) => r.own).map((r) => r.id);
+  assert.deepEqual(own, ['m:b']);
+});
+
 test('new means first seen since the last visit — and nothing is new on a first visit', () => {
   const fresh = site();
   fresh.items[3].firstSeen = iso(12, 6, 40);

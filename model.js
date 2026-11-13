@@ -97,9 +97,9 @@ function rows(site, user, nowMs, seenBeforeMs) {
     });
   }
   // A task carried over from the old app steps aside once Canvas lists the same thing itself.
-  const canvasTitles = new Set((site.items || []).map((item) => titleKey(item.title)));
+  const canvasTitles = (site.items || []).map((item) => titleKey(item.title));
   for (const task of user.tasks) {
-    if (task.imported && canvasTitles.has(titleKey(task.title))) continue;
+    if (task.imported && sameAsAny(task.title, canvasTitles)) continue;
     out.push({
       id: task.id,
       own: true,
@@ -126,6 +126,15 @@ function rows(site, user, nowMs, seenBeforeMs) {
 }
 
 export const titleKey = (title) => String(title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+// True when a Canvas title is this title, contains it, or is contained by it. Canvas often
+// decorates a name ("SAVE THE DATE! Exam 3 ..."); short titles must match exactly, so that
+// "Quiz" is never swallowed by "Quiz 10".
+export function sameAsAny(title, keys) {
+  const key = titleKey(title);
+  if (!key) return false;
+  return keys.some((other) => key === other || (key.length >= 12 && other.includes(key)) || (other.length >= 12 && key.includes(other)));
+}
 
 const byDue = (a, b) => (a.dueMs ?? Infinity) - (b.dueMs ?? Infinity) || a.title.localeCompare(b.title);
 
